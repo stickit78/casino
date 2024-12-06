@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteio Adivinhação - Cassino</title>
+    <style>
+        /* Definições de Fontes e Cores */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: url('https://media.istockphoto.com/photos/green-felt-table-of-blackjack-casino-game-picture-id512890057') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 60%;
+            margin: auto;
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(21, 119, 136, 0.7);
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.6);
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .input-container {
+            margin-top: 20px;
+        }
+
+        input, button {
+            padding: 15px;
+            margin: 10px;
+            font-size: 18px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        input[type="number"] {
+            width: 150px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            width: 200px;
+            font-weight: bold;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+        }
+
+        .balance-container {
+            margin-top: 15px;
+            font-size: 1.5em;
+        }
+
+        .note-image {
+            width: 50px;
+            height: 30px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .note-images-container {
+            margin-top: 15px;
+        }
+
+        .result-message {
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        .history-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .history-table, th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #444;
+            color: #ffffff;
+        }
+
+        td {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .history-table td.lost {
+            background-color: #f8d7da; /* Vermelho */
+        }
+
+        .history-table td.won {
+            background-color: #d4edda; /* Verde */
+        }
+
+        .game-over {
+            font-size: 1.5em;
+            color: #28a745;
+            margin-top: 20px;
+        }
+
+        .input-container input[type="number"] {
+            width: 180px;
+        }
+
+        #restart-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .check-container {
+            margin-top: 20px;
+            background-color: #1eff00;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+            color: black;
+        }
+
+        .check-container h2 {
+            font-size: 2em;
+            color: #333;
+        }
+
+        .check-container p {
+            font-size: 1.5em;
+        }
+
+        /* Dicas */
+        .hint-message {
+            font-size: 1.1em;
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Casino</h1>
+    
+    <!-- Nome do Jogador -->
+    <div class="input-container">
+        <label for="player-name">Nome do Jogador: </label>
+        <input type="text" id="player-name" placeholder="nome">
+    </div>
+
+    <!-- Saldo e Carregar Saldo -->
+    <div class="balance-container">
+        <label for="balance">Saldo Atual: €</label>
+        <span id="balance">100</span><br>
+
+        <div class="input-container">
+            <label for="custom-amount">Adicionar Saldo (€): </label>
+            <input type="number" id="custom-amount" min="0" placeholder="valor personalizado">
+            <button onclick="adicionarSaldo()">Adicionar</button>
+        </div>
+
+        <label for="top-up">Carregamento rápido</label>
+        <div class="note-images-container">
+            <img src="https://st3.depositphotos.com/6125608/33291/i/1600/depositphotos_332918624-stock-photo-ten-euro-bank-note-finance.jpg" class="note-image" alt="Nota 10" onclick="carregarSaldo(10)">
+            <img src="https://images.trustinnews.pt/uploads/sites/5/2019/11/esta-ai-a-nova-nota-de-20-euros-2-1024x557.jpg" class="note-image" alt="Nota 20" onclick="carregarSaldo(20)">
+            <img src="https://img2.gratispng.com/20180324/lyw/av07nlmet.webp" class="note-image" alt="Nota 50" onclick="carregarSaldo(50)">
+        </div>
+    </div>
+
+    <!-- Sortear Número -->
+    <div class="input-container">
+        <button id="sortear-button" onclick="sortearNumero()">Sortear Número</button>
+    </div>
+
+    <!-- Mensagem de Sorteio -->
+    <div class="draw-message" id="draw-message" style="font-size: 1.5em; color: #ffffff; margin-top: 20px;"></div>
+
+    
+
+    <!-- Sistema de Apostas -->
+    <div class="game-container">
+        <label for="bet-value">Valor da Aposta (€): </label>
+        <input type="number" id="bet-value" min="1" max="100">
+        <button id="bet-button" onclick="tentarAdivinhar()" disabled>Apostar</button>
+        <div class="input-container">
+            <label for="guess-number">Escolha um número entre 1 e 10:</label>
+            <input type="number" id="guess-number" min="1" max="10" placeholder="palpite">
+        </div>
+        <div class="input-container">
+            <input type="checkbox" id="hint-checkbox"> <label for="hint-checkbox">Jogar com Dicas (caso acertes terá um desconto de 10% no valor ganho)</label>
+        </div>
+    </div>
+
+    <!-- Mensagem de Resultado -->
+    <div class="result-message" id="result-message"></div>
+
+    <!-- Histórico de Apostas -->
+    <div class="history">
+        <h2>Histórico de Apostas</h2>
+        <table class="history-table" id="history-table">
+            <thead>
+                <tr>
+                    <th>Aposta (€)</th>
+                    <th>Palpite</th>
+                    <th>Resultado</th>
+                    <th>Dica</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Fim de Jogo -->
+    <div id="final-message" class="game-over"></div>
+
+    <!-- Cheque Emitido -->
+    <div id="check-container" class="check-container"></div>
+
+    <!-- Botão para Reiniciar -->
+    <div id="restart-container">
+        <button onclick="reiniciarJogo()">Reiniciar Jogo</button>
+    </div>
+</div>
+
+<script>
+    let saldo = 100; // Saldo inicial
+    let numeroSorteado = null; // O número sorteado estará inicialmente nulo
+    let tentativas = 0;
+    let nomeJogador = '';
+
+    // Função para carregar saldo ao clicar nas notas
+    function carregarSaldo(valor) {
+        saldo += valor;
+        document.getElementById('balance').innerText = saldo.toFixed(2);
+    }
+
+    // Função para adicionar saldo personalizado
+    function adicionarSaldo() {
+        const valorAdicionado = parseFloat(document.getElementById('custom-amount').value);
+        if (isNaN(valorAdicionado) || valorAdicionado <= 0) {
+            alert("Por favor insira um valor válido maior que zero!");
+            return;
+        }
+        saldo += valorAdicionado;
+        document.getElementById('balance').innerText = saldo.toFixed(2);
+        document.getElementById('custom-amount').value = ''; // Limpar o campo após adicionar
+    }
+
+    // Função para sortear um número entre 1 e 10
+    function sortearNumero() {
+        numeroSorteado = Math.floor(Math.random() * 10) + 1;
+    
+        // Mostrar a mensagem de sorteio
+        const drawMessage = document.getElementById('draw-message');
+        drawMessage.innerHTML = `O número foi sorteado! Agora, faça a sua aposta e tente adivinhar o número entre 1 e 10.`;
+
+        // Desabilitar o botão de sortear após sortear o número
+        document.getElementById('sortear-button').disabled = true; 
+    
+        // Habilitar o botão de aposta
+        document.getElementById('bet-button').disabled = false; 
+    }
+
+
+    // Função para tentar adivinhar o número
+    function tentarAdivinhar() {
+        const aposta = parseFloat(document.getElementById('bet-value').value);
+        const palpite = parseInt(document.getElementById('guess-number').value);
+        const usarDicas = document.getElementById('hint-checkbox').checked;
+
+        if (!nomeJogador) {
+            nomeJogador = document.getElementById('player-name').value;
+        }
+
+        if (isNaN(aposta) || aposta <= 0 || aposta > saldo) {
+            alert("O valor da aposta deve ser maior que zero e não pode exceder o saldo!");
+            return;
+        }
+
+        if (palpite < 1 || palpite > 10) {
+            alert("O palpite deve estar entre 1 e 10!");
+            return;
+        }
+
+        let resultado = "";
+        let dica = "";
+        let status = "";
+        let fundo = "";
+
+        tentativas++;
+        if (palpite === numeroSorteado) {
+            resultado = "Acertou!";
+            status = "Vitória";
+            fundo = "won";
+            document.body.style.backgroundColor = "green"; // Alterar fundo para verde quando acerta
+            if (usarDicas) {
+                // Desconto de 10% caso ganhe usando dicas
+                const desconto = aposta * 0.10;
+                saldo += (aposta - desconto);
+            } else {
+                saldo += aposta;
+            }
+            emitirCheque();
+            mostrarBotaoReiniciar();
+        } else {
+            resultado = "Errou!";
+            status = "Derrota";
+            fundo = "lost";
+            document.body.style.backgroundColor = "red"; // Alterar fundo para vermelho quando erra
+            if (usarDicas) {
+                if (palpite < numeroSorteado) {
+                    dica = "Dica: O número é maior!";
+                } else {
+                    dica = "Dica: O número é menor!";
+                }
+            }
+            saldo -= aposta;
+        }
+
+        document.getElementById('balance').innerText = saldo.toFixed(2);
+
+        // Adicionar histórico na tabela
+        const table = document.getElementById('history-table').getElementsByTagName('tbody')[0];
+        const row = table.insertRow();
+        row.className = fundo;
+        row.innerHTML = `
+            <td>€${aposta.toFixed(2)}</td>
+            <td>${palpite}</td>
+            <td>${resultado}</td>
+            <td>${dica}</td>
+        `;
+        document.getElementById('result-message').innerText = `${resultado} O número sorteado é ${numeroSorteado}.`;
+
+        if (saldo <= 0) {
+            alert("Saldo insuficiente! O jogo foi finalizado.");
+            reiniciarJogo();
+        }
+    }
+
+    // Função para reiniciar o jogo
+    function reiniciarJogo() {
+        numeroSorteado = null;
+        tentativas = 0;
+        document.getElementById('result-message').innerText = '';
+        document.getElementById('final-message').innerText = '';
+        document.getElementById('history-table').getElementsByTagName('tbody')[0].innerHTML = '';
+        document.getElementById('restart-container').style.display = 'none';
+        document.getElementById('bet-value').disabled = false;
+        document.getElementById('guess-number').disabled = false;
+        document.getElementById('bet-button').disabled = true; // Desabilitar o botão de aposta
+        document.getElementById('hint-checkbox').disabled = false;
+        document.getElementById('check-container').innerHTML = ''; // Limpar cheque
+        document.getElementById('custom-amount').value = ''; // Limpar valor de saldo personalizado
+        document.getElementById('sortear-button').disabled = false; // Habilitar o botão de sortear
+        document.body.style.backgroundColor = ""; // Resetar o fundo da página
+    }
+
+    // Função para mostrar o botão de reiniciar
+    function mostrarBotaoReiniciar() {
+        document.getElementById('restart-container').style.display = 'block';
+    }
+
+    // Função para emitir o cheque de pagamento
+    function emitirCheque() {
+        const chequeContainer = document.getElementById('check-container');
+        const cheque = document.createElement('div');
+        cheque.innerHTML = `<h2>Cheque Emitido</h2><p>Nome: ${nomeJogador}</p><p>Valor: €${saldo.toFixed(2)}</p>`;
+        chequeContainer.appendChild(cheque);
+    }
+</script>
+
+</body>
+</html>
